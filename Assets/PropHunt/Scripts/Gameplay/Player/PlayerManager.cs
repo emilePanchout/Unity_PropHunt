@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 public class PlayerManager : NetworkBehaviour
 {
@@ -11,6 +13,10 @@ public class PlayerManager : NetworkBehaviour
     public Camera Camera;
     protected ClassController _currentController;
     public NetworkVariable<bool> isHunter;
+    public int baseHealth = 100;
+    public int health = 100;
+
+    public TMP_Text healthText;
 
     public ActionInput _actionInput;
     public Animator _animator;
@@ -34,6 +40,9 @@ public class PlayerManager : NetworkBehaviour
             _actionInput = GetComponent<ActionInput>();
         }
         if (Camera == null) Camera = GetComponentInChildren<Camera>(true);
+
+        healthText = GameObject.Find("HealthText").GetComponent<TMP_Text>();
+        
     }
     public override void OnNetworkSpawn()
     {
@@ -51,10 +60,14 @@ public class PlayerManager : NetworkBehaviour
         Camera.gameObject.SetActive(false);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void SwapTeamServerRPC()
     {
-        isHunter.Value = !isHunter.Value;
+        if (SceneManager.GetActiveScene().name == "Lobby")
+        {
+            isHunter.Value = !isHunter.Value;
+            ResetHealth();
+        }
     }
 
     public void SwapTeam(bool previousIsHunterValue, bool newIsHunterValue)
@@ -78,5 +91,28 @@ public class PlayerManager : NetworkBehaviour
         bool isLocked = !_movementController.cursorLocked;
         Cursor.lockState = isLocked? CursorLockMode.Locked : CursorLockMode.None;
         _movementController.cursorLocked = isLocked;
+        UpdateHealth(-5);
     }
+
+    public void ResetHealth()
+    {
+        if (IsOwner)
+        {
+            health = baseHealth;
+            healthText.text = baseHealth.ToString();
+        }
+    }
+
+    //[ServerRpc(RequireOwnership = false)]
+
+    public void UpdateHealth(int value)
+    {
+        if (IsOwner)
+        {
+            health += value;
+            healthText.text = health.ToString();
+        }
+
+    }
+
 }

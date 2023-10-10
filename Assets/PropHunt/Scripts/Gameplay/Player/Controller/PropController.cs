@@ -229,7 +229,7 @@ public class PropController : ClassController
 
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void ChangeCurrentPropServerRPC(FixedString64Bytes propName)
     {
         _currentMorphName.Value = propName;
