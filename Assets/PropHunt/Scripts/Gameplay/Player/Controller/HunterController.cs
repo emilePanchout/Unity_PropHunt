@@ -12,7 +12,7 @@ public class HunterController : ClassController
     {
         gameObject.SetActive(true);
         _camera.transform.SetParent(transform);
-        _camera.transform.localPosition = new Vector3(2.5f, 1.1f, 1.2f);
+        //_camera.transform.localPosition = new Vector3(2.5f, 1.1f, 1.2f);
         ResetAnimator();
     }
 

@@ -7,8 +7,8 @@ public class SpawnProps : MonoBehaviour
 {
     public Prop PropToSpawn;
 
-    public int minNumberOfProps;
-    public int maxNumberOfProps;
+    public int minNumberOfProps = 0;
+    public int maxNumberOfProps = 5;
 
     public List<Transform> SpawnPoints;
 
@@ -20,7 +20,7 @@ public class SpawnProps : MonoBehaviour
             return;
         }
 
-        int nPropsToSpawn = UnityEngine.Random.Range(0, maxNumberOfProps);
+        int nPropsToSpawn = UnityEngine.Random.Range(0, 5);
         System.Random rng = new System.Random();
         SpawnPoints.Shuffle();
 
