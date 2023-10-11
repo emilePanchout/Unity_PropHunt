@@ -30,7 +30,6 @@ public class SpawnProps : MonoBehaviour
             var transform = PropToSpawn.transform;
             var go = Instantiate(PropToSpawn.gameObject, sp.position, transform.rotation);
             go.GetComponent<NetworkObject>().Spawn();
-            Debug.Log("spaned");
         }
     }
 }

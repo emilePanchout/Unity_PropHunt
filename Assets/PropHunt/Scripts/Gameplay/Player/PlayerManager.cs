@@ -13,10 +13,14 @@ public class PlayerManager : NetworkBehaviour
     public Camera Camera;
     protected ClassController _currentController;
     public NetworkVariable<bool> isHunter;
+
     public int baseHealth = 100;
     public int health = 100;
-
     public TMP_Text healthText;
+
+    public GameObject blinder;
+    public TMP_Text counterText;
+    public PlayerInput inputs;
 
     public ActionInput _actionInput;
     public Animator _animator;
@@ -42,6 +46,9 @@ public class PlayerManager : NetworkBehaviour
         if (Camera == null) Camera = GetComponentInChildren<Camera>(true);
 
         healthText = GameObject.Find("HealthText").GetComponent<TMP_Text>();
+
+        NetworkManager.Singleton.SceneManager.OnSceneEvent += Blinder;
+
         
     }
     public override void OnNetworkSpawn()
@@ -57,6 +64,19 @@ public class PlayerManager : NetworkBehaviour
             _movementController.SetAnimator(GetComponent<Animator>());
             return;
         }
+
+        // Si un player a changé d'équipe avant la connexion de ce joueur 
+        if(IsClient && !IsOwner && isHunter.Value != false)
+        {
+            SwapTeam(false, true);
+        }
+
+        if(SceneManager.GetActiveScene().name == "Game")
+        {
+            blinder.SetActive(true);
+            Debug.Log("blind");
+        }
+
         Camera.gameObject.SetActive(false);
     }
 
@@ -66,7 +86,7 @@ public class PlayerManager : NetworkBehaviour
         if (SceneManager.GetActiveScene().name == "Lobby")
         {
             isHunter.Value = !isHunter.Value;
-            ResetHealth();
+
         }
     }
 
@@ -78,12 +98,14 @@ public class PlayerManager : NetworkBehaviour
             _actionInput.SetClassInput(_hunterController.ClassInput);
             _propController.Deactivate();
             _hunterController.Activate();
+            ResetHealth();
             return;
         }
         _movementController.ClassController = _propController;
         _actionInput.SetClassInput(_propController.ClassInput);
         _hunterController.Deactivate();
         _propController.Activate();
+        ResetHealth();
     }
 
     public void ToggleCursorLock()
@@ -91,7 +113,6 @@ public class PlayerManager : NetworkBehaviour
         bool isLocked = !_movementController.cursorLocked;
         Cursor.lockState = isLocked? CursorLockMode.Locked : CursorLockMode.None;
         _movementController.cursorLocked = isLocked;
-        UpdateHealth(-5);
     }
 
     public void ResetHealth()
@@ -101,6 +122,7 @@ public class PlayerManager : NetworkBehaviour
             health = baseHealth;
             healthText.text = baseHealth.ToString();
         }
+
     }
 
     //[ServerRpc(RequireOwnership = false)]
@@ -113,6 +135,35 @@ public class PlayerManager : NetworkBehaviour
             healthText.text = health.ToString();
         }
 
+    }
+
+    public void Blinder(SceneEvent sceneEvent)
+    {
+        if(IsOwner && isHunter.Value)
+        {
+            if (SceneManager.GetActiveScene().name == "Game")
+            {
+                blinder.SetActive(true);
+                inputs.enabled = false;
+
+                StartCoroutine(BlinderTimer(10));
+            }
+        }
+
+    }
+    IEnumerator BlinderTimer(int seconds)
+    {
+        int counter = seconds;
+        while (counter > 0)
+        {
+            counterText.text = counter.ToString();
+            yield return new WaitForSeconds(1);
+
+            counter--;
+            
+        }
+        blinder.SetActive(false);
+        inputs.enabled = true;
     }
 
 }

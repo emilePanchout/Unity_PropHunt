@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 using static UnityEngine.InputSystem.InputAction;
 
 public class HunterController : ClassController
@@ -12,7 +13,7 @@ public class HunterController : ClassController
     {
         gameObject.SetActive(true);
         _camera.transform.SetParent(transform);
-        //_camera.transform.localPosition = new Vector3(2.5f, 1.1f, 1.2f);
+        _camera.transform.localPosition = new Vector3(0, 1, 0);
         ResetAnimator();
     }
 
@@ -21,18 +22,28 @@ public class HunterController : ClassController
         gameObject.SetActive(false);
     }
 
+    [ServerRpc]
+    public void FireServerRpc(Vector3 camPos,Quaternion camRot,Vector3 camForw )
+    {
+        var newProjectile = Instantiate(projectile, camPos + camForw * 0.6f, camRot);
+        newProjectile.GetComponent<NetworkObject>().Spawn();
+        //newProjectile.transform.position = camPos + camForw * 0.6f;
+        //newProjectile.transform.rotation = camRot;
+        const int size = 1;
+        newProjectile.transform.localScale *= size;
+        newProjectile.GetComponent<Rigidbody>().mass = Mathf.Pow(size, 3);
+        newProjectile.GetComponent<Rigidbody>().AddForce(camForw * 20f, ForceMode.Impulse);
+        newProjectile.GetComponent<MeshRenderer>().material.color =
+        new Color(Random.value, Random.value, Random.value, 1.0f);
+    }
+
     public void Fire()
     {
-       // var transform = this.transform;
-       // var newProjectile = Instantiate(projectile);
-       // newProjectile.transform.position = transform.position + transform.forward * 0.6f;
-       // newProjectile.transform.rotation = transform.rotation;
-       // const int size = 1;
-       // newProjectile.transform.localScale *= size;
-       // newProjectile.GetComponent<Rigidbody>().mass = Mathf.Pow(size, 3);
-       // newProjectile.GetComponent<Rigidbody>().AddForce(transform.forward * 20f, ForceMode.Impulse);
-       // newProjectile.GetComponent<MeshRenderer>().material.color =
-       //     new Color(Random.value, Random.value, Random.value, 1.0f);
+        if(IsOwner)
+        {
+            FireServerRpc(_camera.transform.position, _camera.transform.rotation, _camera.transform.forward);
+        }
+
     }
 
 }
