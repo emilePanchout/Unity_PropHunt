@@ -15,8 +15,10 @@ public class PlayerManager : NetworkBehaviour
     public NetworkVariable<bool> isHunter;
 
     public int baseHealth = 100;
-    public int health = 100;
+    public NetworkVariable<int> health;
     public TMP_Text healthText;
+    public GameObject propBody;
+    public GameObject hunterBody;
 
     public GameObject blinder;
     public TMP_Text counterText;
@@ -30,7 +32,12 @@ public class PlayerManager : NetworkBehaviour
     private void Awake()
     {
         _movementController = GetComponent<MovementController>();
+
         isHunter.OnValueChanged += SwapTeam;
+        health.OnValueChanged += UpdateHealth;
+        NetworkManager.Singleton.SceneManager.OnSceneEvent += Blinder;
+
+
         if (_propController == null)
         {
             _propController = GetComponentInChildren<PropController>();
@@ -47,7 +54,7 @@ public class PlayerManager : NetworkBehaviour
 
         healthText = GameObject.Find("HealthText").GetComponent<TMP_Text>();
 
-        NetworkManager.Singleton.SceneManager.OnSceneEvent += Blinder;
+
 
         
     }
@@ -55,6 +62,7 @@ public class PlayerManager : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         SwapTeam(true, false);
+
         if (IsOwner)
         {
             GetComponent<PlayerInput>().enabled = true;
@@ -98,14 +106,14 @@ public class PlayerManager : NetworkBehaviour
             _actionInput.SetClassInput(_hunterController.ClassInput);
             _propController.Deactivate();
             _hunterController.Activate();
-            ResetHealth();
+            ResetHealthServerRpc();
             return;
         }
         _movementController.ClassController = _propController;
         _actionInput.SetClassInput(_propController.ClassInput);
         _hunterController.Deactivate();
         _propController.Activate();
-        ResetHealth();
+        ResetHealthServerRpc();
     }
 
     public void ToggleCursorLock()
@@ -115,55 +123,95 @@ public class PlayerManager : NetworkBehaviour
         _movementController.cursorLocked = isLocked;
     }
 
-    public void ResetHealth()
+    [ServerRpc(RequireOwnership = false)]
+    public void ResetHealthServerRpc()
     {
-        if (IsOwner)
-        {
-            health = baseHealth;
-            healthText.text = baseHealth.ToString();
-        }
-
+        health.Value = baseHealth;
+        healthText.text = baseHealth.ToString();
     }
 
-    //[ServerRpc(RequireOwnership = false)]
 
-    public void UpdateHealth(int value)
+
+    public void UpdateHealth(int prevVal, int newVal)
     {
         if (IsOwner)
         {
-            health += value;
-            healthText.text = health.ToString();
+            healthText.text = newVal.ToString();
+
+            if(newVal <= 0)
+            {
+                playerDeathClientRpc();
+            }
+        }
+    }
+
+    [ClientRpc]
+    public void playerDeathClientRpc()
+    {
+        if (IsOwner)
+        {
+            //propBody.SetActive(false);
+            //hunterBody.SetActive(false);
         }
 
     }
 
     public void Blinder(SceneEvent sceneEvent)
     {
-        if(IsOwner && isHunter.Value)
+        if (IsServer && SceneManager.GetActiveScene().name == "Game")
         {
-            if (SceneManager.GetActiveScene().name == "Game")
-            {
-                blinder.SetActive(true);
-                inputs.enabled = false;
-
-                StartCoroutine(BlinderTimer(10));
-            }
+            BlinderServerRpc();
         }
-
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void BlinderServerRpc()
+    {
+        SendBlinderClientRpc();
+        StartCoroutine(BlinderTimer(10));
+    }
+
+    [ClientRpc]
+    public void SendBlinderClientRpc()
+    {
+        if (IsOwner && isHunter.Value)
+        {
+            blinder.SetActive(true);
+            inputs.enabled = false;
+        }
+    }
+
+    [ClientRpc]
+    public void RemoveBlinderClientRpc()
+    {
+        if (IsOwner && isHunter.Value)
+        {
+            blinder.SetActive(false);
+            inputs.enabled = true;
+        }
+    }
+
+    [ClientRpc]
+    public void BlinderTimerClientRpc(int seconds)
+    {
+        counterText.text = seconds.ToString();
+    }
+
+    
+
     IEnumerator BlinderTimer(int seconds)
     {
         int counter = seconds;
         while (counter > 0)
         {
-            counterText.text = counter.ToString();
+            BlinderTimerClientRpc(counter);
             yield return new WaitForSeconds(1);
 
             counter--;
-            
         }
-        blinder.SetActive(false);
-        inputs.enabled = true;
+
+        RemoveBlinderClientRpc();
+
     }
 
 }

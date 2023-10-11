@@ -1311,8 +1311,11 @@ MonoBehaviour:
   isHunter:
     m_InternalValue: 0
   baseHealth: 100
-  health: 100
+  health:
+    m_InternalValue: 0
   healthText: {fileID: 8777075403883952499}
+  propBody: {fileID: 5153390484216527601}
+  hunterBody: {fileID: 2141577282805382806}
   blinder: {fileID: 7126465071304157607}
   counterText: {fileID: 7953559398443519196}
   inputs: {fileID: 183304297205958025}
@@ -1954,6 +1957,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6888040181248455240, guid: 9ea59ed8d72fe7b47952aebaa55be10c, type: 3}
   m_PrefabInstance: {fileID: 1969873289993262651}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5153390484216527601 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6688654710658739402, guid: 9ea59ed8d72fe7b47952aebaa55be10c, type: 3}
+  m_PrefabInstance: {fileID: 1969873289993262651}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8808568171746378311
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2016,6 +2024,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 91e80d4c5dddf044eb272f67cbf7ba14, type: 3}
+--- !u!1 &2141577282805382806 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7459714859268603089, guid: 91e80d4c5dddf044eb272f67cbf7ba14, type: 3}
+  m_PrefabInstance: {fileID: 8808568171746378311}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2233140245309284372 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7260901207790101075, guid: 91e80d4c5dddf044eb272f67cbf7ba14, type: 3}
